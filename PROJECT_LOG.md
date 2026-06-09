@@ -7,18 +7,23 @@
 
 ## Проект 1: Shroom Box Automation
 
-### Статус: S3 — настройка стека (InfluxDB + Grafana)
+### Статус: S3 завершён — стек работает на тестовом датчике. Следующий шаг: S2 (закупка SHT41).
 
 ### Что сделано
 - [x] S0: GitHub зарегистрирован (dan-lebedev), Git настроен на MacBook M1
 - [x] S1: Репозиторий shroom-box-automation создан, структура папок, README.md
-- [x] S3 (частично): ESPHome установлен, работает, есть девайсы
-- [x] S3 (частично): InfluxDB + Grafana установлены как Add-ons в HAOS
+- [x] S3: ESPHome + InfluxDB + Grafana установлены и связаны. Цепочка ESPHome → HA → InfluxDB → Grafana работает на тестовом датчике (temp_jar_3_temperature).
 
 ### В процессе
-- [ ] InfluxDB: первичная настройка (Organization, Bucket, Token)
-- [ ] Grafana: подключить к InfluxDB
-- [ ] HA Integration: настроить отправку данных в InfluxDB
+- [ ] S2: Закупить SHT41 на Али + корпус/защита от конденсата
+- [ ] S4: ESPHome конфиг для боевого сенсора в шрумбоксе
+- [ ] S5: HA automations (вентиляция по CO2, увлажнение)
+- [ ] S6: Grafana dashboard (полный, не одна панель)
+
+### Известные риски
+- Add-on InfluxDB2 от Dattel — community, малая база пользователей
+- Fallback если не заработает: официальный InfluxDB 1.x add-on
+
 
 ### Hardware Decisions
 - Sensor: SHT41 (выбран вместо SHT31/DHT22)
