@@ -1,0 +1,42 @@
+# Secrets 
+secrets.yaml
+*.secret
+*.key
+*.pem
+.env
+.env.*
+
+# Home Assistant
+homeassistant/secrets.yaml
+homeassistant/.storage/
+homeassistant/known_devices.yaml
+homeassistant/*.db
+homeassistant/*.db-*
+homeassistant/*.log
+homeassistant/.cloud/
+homeassistant/.uuid
+homeassistant/home-assistant_v2.db*
+homeassistant/tts/
+homeassistant/deps/
+
+# ESPHome
+esphome/secrets.yaml
+esphome/.esphome/
+esphome/*.bin
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node 
+node_modules/
