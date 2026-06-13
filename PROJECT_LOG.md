@@ -19,9 +19,11 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
 - [x] S3 (partial): Full pipeline verified — ESPHome → HA → InfluxDB → Grafana (test sensor)
 - [x] Humidifier auto-resume after power cycle confirmed
 - [x] GitHub Issue created: "Add wiring diagram after sensors arrive"
+- [x] Security: secrets.yaml setup, .gitignore configured
+- [x] Order T/RH probe + GY-302  from AliExpress
+- [x] S4 (partial): ESPHome config drafted — shroom-box-esp32.yaml (SHT41 + BH1750), pending hardware arrival
 
 ### Next Steps
-- [ ] Order T/RH probe from AliExpress
 - [ ] S4: ESPHome config for ESP32 + sensors in shroom box (can start YAML draft before hardware arrives)
 - [ ] S5: HA automations (fan by CO₂, humidifier by RH)
 - [ ] S6: Grafana dashboard
@@ -33,7 +35,7 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
 - **CO₂ sensor:** NDIR Zigbee — integrated via Zigbee2MQTT, bypasses ESP32.
 - **Humidification:** active — ultrasonic reptile humidifier with hose. Controlled via Zigbee smart plug. Auto-resume confirmed.
 - **Fan:** existing 12V + PWM dimmer + Zigbee plug for AC power.
-- **Light sensor (BH1750):** skipped, not critical for oyster mushrooms.
+- **Light sensor:** BH1750 (GY-302 module, I²C, same bus as SHT41) — photoperiod compliance logging
 - **BOM:** `hardware/BOM.md`
 - **Physical box description:** `docs/box-description.md`
 - **Wiring diagram:** to be created after sensors arrive (GitHub Issue open).
