@@ -31,6 +31,8 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
   - Failsafe logic for both sensors (unavailable → safe state + notification)
   - TODO: replace PLACEHOLDER entity_ids when Zigbee plugs connected
   - TODO: verify sensor.shroom_box_esp32_humidity after ESP32 hardware arrives
+- [x] S6: Grafana dashboard draft complete — temp/humidity/CO2/light/dew point/absolute humidity/substrate temp panels. DS18B20 panels present as placeholders.
+
 
 
 
