@@ -1,0 +1,120 @@
+# ═══════════════════════════════════════════════════════════
+# SHROOM BOX — FAN CONTROL (CO2-based)
+#
+# Thresholds:
+#   ON  when CO2 > 1200 ppm (for 30s)
+#   OFF when CO2 < 900 ppm  (for 2 min)
+#
+# Hysteresis gap (900–1200) prevents relay chatter.
+#
+# TODO: replace switch.PLACEHOLDER_fan_plug with real entity_id
+# ═══════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────
+# FAN ON — CO2 too high
+# ───────────────────────────────────────────
+- id: shroom_fan_on_high_co2
+  alias: "Shroom Box — Fan ON (CO2 high)"
+  description: "Turn on exhaust fan when CO2 exceeds 1200 ppm"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ndir_co2_co2
+      above: 1200
+      for:
+        seconds: 30
+  condition:
+    # Avoid redundant service calls if fan is already on
+    - condition: state
+      entity_id: switch.PLACEHOLDER_fan_plug
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.PLACEHOLDER_fan_plug
+  mode: single
+
+# ───────────────────────────────────────────
+# FAN OFF — CO2 recovered
+# ───────────────────────────────────────────
+- id: shroom_fan_off_co2_ok
+  alias: "Shroom Box — Fan OFF (CO2 normal)"
+  description: "Turn off exhaust fan when CO2 drops below 900 ppm"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ndir_co2_co2
+      below: 900
+      for:
+        minutes: 2
+  condition:
+    # Only act if fan is actually running
+    - condition: state
+      entity_id: switch.PLACEHOLDER_fan_plug
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.PLACEHOLDER_fan_plug
+  mode: single
+
+# ───────────────────────────────────────────
+# FAILSAFE — CO2 sensor lost → Fan ON
+# Safer to ventilate than to suffocate the block
+# ───────────────────────────────────────────
+- id: shroom_fan_safety_unavailable
+  alias: "Shroom Box — Fan ON (CO2 sensor unavailable)"
+  description: "Failsafe: turn on fan if CO2 sensor goes unavailable for 5 min"
+  trigger:
+    - platform: state
+      entity_id: sensor.ndir_co2_co2
+      to: "unavailable"
+      for:
+        minutes: 5
+    - platform: state
+      entity_id: sensor.ndir_co2_co2
+      to: "unknown"
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: switch.PLACEHOLDER_fan_plug
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.PLACEHOLDER_fan_plug
+    - service: persistent_notification.create
+      data:
+        title: "Shroom Box — CO2 sensor lost"
+        message: "CO2 sensor unavailable for 5 min. Fan turned ON as failsafe."
+        notification_id: shroom_co2_failsafe
+  mode: single
+
+# ───────────────────────────────────────────
+# FAILSAFE RECOVER — CO2 sensor back online
+# Re-evaluate: if CO2 already normal, turn fan off
+# ───────────────────────────────────────────
+- id: shroom_fan_safety_recover
+  alias: "Shroom Box — Fan recover after CO2 sensor restore"
+  description: "When CO2 sensor comes back, turn fan off if CO2 is already below 900"
+  trigger:
+    - platform: state
+      entity_id: sensor.ndir_co2_co2
+      from: "unavailable"
+    - platform: state
+      entity_id: sensor.ndir_co2_co2
+      from: "unknown"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.ndir_co2_co2
+      below: 900
+    - condition: state
+      entity_id: switch.PLACEHOLDER_fan_plug
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.PLACEHOLDER_fan_plug
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: shroom_co2_failsafe
+  mode: single

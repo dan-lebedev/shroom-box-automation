@@ -22,9 +22,20 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
 - [x] Security: secrets.yaml setup, .gitignore configured
 - [x] Order T/RH probe + GY-302  from AliExpress
 - [x] S4 (partial): ESPHome config drafted — shroom-box-esp32.yaml (SHT41 + BH1750), pending hardware arrival
+- [x] Architecture diagram added: `docs/architecture.md`
+- [x] Wiring diagram draft added: `docs/wiring.md`
+- [x] ESP32 wiring plan updated: separate I²C buses for SHT41 and BH1750
+- [x] S5: HA automation drafts complete — shroom_fan.yaml + shroom_humidifier.yaml
+  - Fan control: CO2 thresholds 900/1200 ppm with hysteresis
+  - Humidifier control: RH thresholds 85/93% with hysteresis
+  - Failsafe logic for both sensors (unavailable → safe state + notification)
+  - TODO: replace PLACEHOLDER entity_ids when Zigbee plugs connected
+  - TODO: verify sensor.shroom_box_esp32_humidity after ESP32 hardware arrives
+
+
 
 ### Next Steps
-- [ ] S4: ESPHome config for ESP32 + sensors in shroom box (can start YAML draft before hardware arrives)
+- [ ] S4: ESPHome config for ESP32 + sensors in shroom box 
 - [ ] S5: HA automations (fan by CO₂, humidifier by RH)
 - [ ] S6: Grafana dashboard
 - [ ] S7: Growing cycle, data collection
@@ -35,7 +46,7 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
 - **CO₂ sensor:** NDIR Zigbee — integrated via Zigbee2MQTT, bypasses ESP32.
 - **Humidification:** active — ultrasonic reptile humidifier with hose. Controlled via Zigbee smart plug. Auto-resume confirmed.
 - **Fan:** existing 12V + PWM dimmer + Zigbee plug for AC power.
-- **Light sensor:** BH1750 (GY-302 module, I²C, same bus as SHT41) — photoperiod compliance logging
+- **Light sensor:** BH1750 (GY-302 module, I²C on dedicated bus GPIO25/GPIO26) — photoperiod compliance logging
 - **BOM:** `hardware/BOM.md`
 - **Physical box description:** `docs/box-description.md`
 - **Wiring diagram:** to be created after sensors arrive (GitHub Issue open).

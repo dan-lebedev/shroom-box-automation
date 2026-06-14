@@ -1,0 +1,144 @@
+# ═══════════════════════════════════════════════════════════
+# SHROOM BOX — HUMIDIFIER CONTROL (RH-based)
+#
+# Thresholds:
+#   ON  when RH < 85% (for 30s)
+#   OFF when RH > 93% (for 60s)
+#
+# Target zone: 85–93% RH — optimal for oyster mushroom fruiting
+#
+# TODO: replace switch.PLACEHOLDER_humidifier_plug with real entity_id
+# TODO: verify sensor entity_id after ESP32 hardware connected:
+#       expected: sensor.shroom_box_esp32_humidity
+# ═══════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────
+# HUMIDIFIER ON — RH too low
+# ───────────────────────────────────────────
+- id: shroom_hum_on_low_rh
+  alias: "Shroom Box — Humidifier ON (RH low)"
+  description: "Turn on humidifier when RH drops below 85%"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.shroom_box_esp32_humidity
+      below: 85
+      for:
+        seconds: 30
+  condition:
+    # Avoid redundant calls if humidifier already running
+    - condition: state
+      entity_id: switch.PLACEHOLDER_humidifier_plug
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.PLACEHOLDER_humidifier_plug
+  mode: single
+
+# ───────────────────────────────────────────
+# HUMIDIFIER OFF — RH high enough
+# ───────────────────────────────────────────
+- id: shroom_hum_off_rh_ok
+  alias: "Shroom Box — Humidifier OFF (RH high)"
+  description: "Turn off humidifier when RH exceeds 93%"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.shroom_box_esp32_humidity
+      above: 93
+      for:
+        minutes: 1
+  condition:
+    # Only act if humidifier is actually running
+    - condition: state
+      entity_id: switch.PLACEHOLDER_humidifier_plug
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.PLACEHOLDER_humidifier_plug
+  mode: single
+
+# ───────────────────────────────────────────
+# FAILSAFE — ESP32 sensor lost → Humidifier OFF
+# Safer to let it dry slightly than flood the block blind
+# ───────────────────────────────────────────
+- id: shroom_hum_safety_unavailable
+  alias: "Shroom Box — Humidifier OFF (sensor unavailable)"
+  description: "Failsafe: turn off humidifier if RH sensor unavailable for 5 min"
+  trigger:
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      to: "unavailable"
+      for:
+        minutes: 5
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      to: "unknown"
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: switch.PLACEHOLDER_humidifier_plug
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.PLACEHOLDER_humidifier_plug
+    - service: persistent_notification.create
+      data:
+        title: "Shroom Box — RH sensor lost"
+        message: "Humidity sensor unavailable for 5 min. Humidifier turned OFF as failsafe."
+        notification_id: shroom_rh_failsafe
+  mode: single
+
+# ───────────────────────────────────────────
+# FAILSAFE RECOVER — sensor back, RH low → turn on
+# ───────────────────────────────────────────
+- id: shroom_hum_safety_recover_on
+  alias: "Shroom Box — Humidifier recover ON (RH still low)"
+  description: "When RH sensor returns and RH is still low, resume humidification"
+  trigger:
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      from: "unavailable"
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      from: "unknown"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.shroom_box_esp32_humidity
+      below: 85
+    - condition: state
+      entity_id: switch.PLACEHOLDER_humidifier_plug
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.PLACEHOLDER_humidifier_plug
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: shroom_rh_failsafe
+  mode: single
+
+# ───────────────────────────────────────────
+# FAILSAFE RECOVER — sensor back, RH ok → dismiss notification
+# ───────────────────────────────────────────
+- id: shroom_hum_safety_recover_off
+  alias: "Shroom Box — Humidifier recover OFF (RH normal)"
+  description: "When RH sensor returns and RH is already normal, just dismiss notification"
+  trigger:
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      from: "unavailable"
+    - platform: state
+      entity_id: sensor.shroom_box_esp32_humidity
+      from: "unknown"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.shroom_box_esp32_humidity
+      above: 85
+  action:
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: shroom_rh_failsafe
+  mode: single
