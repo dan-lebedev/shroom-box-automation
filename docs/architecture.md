@@ -21,12 +21,14 @@ flowchart LR
         BH["BH1750 Light Sensor"]
         FAN["12V Exhaust Fan"]
         HUM["Ultrasonic Humidifier"]
+        DS18B20["DS18B20 Substrate Probe"]
     end
 
     subgraph ESP["ESP32 / ESPHome"]
         I2CA["I2C Bus A<br/>GPIO21/GPIO22"]
         I2CB["I2C Bus B<br/>GPIO25/GPIO26"]
         ESPHOME["ESPHome Firmware"]
+        OW["1-Wire Bus<br/>GPIO4"]
     end
 
     subgraph Zigbee["Zigbee Network"]
@@ -61,6 +63,12 @@ flowchart LR
 
     HASS --> INFLUX
     INFLUX --> GRAFANA
+
+    DS18B20 --> OW
+    OW --> ESPHOME
+
+
+    
 ```
 
 ## Data Flow
@@ -75,10 +83,12 @@ flowchart LR
 
 | Parameter | Source | Action |
 |---|---|---|
-| Temperature | SHT41 | Monitoring only |
+| Temperature (air) | SHT41 | Monitoring only |
+| Temperature (substrate) | DS18B20 | Monitoring only — substrate vs air delta |
 | Relative humidity | SHT41 | Humidifier control |
 | CO2 | Zigbee NDIR sensor | Exhaust fan control |
 | Light | BH1750 | Photoperiod compliance logging |
+
 
 ## Notes
 

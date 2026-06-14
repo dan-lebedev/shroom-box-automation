@@ -12,6 +12,10 @@
 | BH1750 / GY-302 | GND | GND |
 | BH1750 / GY-302 | GPIO25 | SDA |
 | BH1750 / GY-302 | GPIO26 | SCL |
+| DS18B20 Probe | 3V3 | VCC (red wire) |
+| DS18B20 Probe | GND | GND (black wire) |
+| DS18B20 Probe | GPIO4 | Data (yellow wire) + 4.7kΩ pullup to 3V3 |
+
 
 ## Wiring Diagram
 
@@ -81,3 +85,6 @@ flowchart LR
 - Place the BH1750 so it sees the box light, but is protected from condensation.
 - Use short Dupont wires where possible.
 - If readings become unstable, reduce I2C frequency or improve wiring.
+- DS18B20 data line requires a 4.7kΩ pull-up resistor between GPIO4 and 3V3.
+- Insert DS18B20 probe tip directly into the substrate block, ~5cm deep.
+- Keep DS18B20 cable away from the humidifier hose.
