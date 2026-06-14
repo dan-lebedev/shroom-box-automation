@@ -31,9 +31,21 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
   - Failsafe logic for both sensors (unavailable → safe state + notification)
   - TODO: replace PLACEHOLDER entity_ids when Zigbee plugs connected
   - TODO: verify sensor.shroom_box_esp32_humidity after ESP32 hardware arrives
-- [x] S6: Grafana dashboard draft complete — temp/humidity/CO2/light/dew point/absolute humidity/substrate temp panels. DS18B20 panels present as placeholders.
+- [x] S6: Grafana dashboard draft complete — temp/humidity/CO2/light/dew point/absolute humidity/substrate temp panels. DS18B20 panels present as placeholders. All sensors entities present as placeholders.
 
 
+
+### S4 progress (firmware draft ready, hardware pending)
+- ESPHome config drafted and reviewed: shroom-box-esp32.yaml
+- Sensors: SHT41 (I2C bus_sht GPIO21/22), BH1750 (I2C bus_light GPIO25/26),
+  DS18B20 substrate (1-Wire GPIO4, needs 4.7kΩ pull-up), NDIR CO2
+- Derived: dew point + absolute humidity (Alduchov-Eskridge Magnus)
+- Production features: safe mode, NaN watchdog (3-strike reboot),
+  runtime humidity thresholds, diagnostics
+- TODO on first flash: capture DS18B20 address from logs, fill into config
+- TODO: verify GPIO25/26 free on actual board
+- Required secrets: shroom_esp32_api_key, shroom_esp32_ota_password,
+  wifi_ssid, wifi_password, shroom_esp32_ap_password
 
 
 ### Next Steps

@@ -54,6 +54,16 @@ i2c:
     scl: GPIO26
     scan: true
     frequency: 50kHz
+# ─────────────────────────────────────────────
+# 1-WIRE BUS
+# DS18B20 substrate temperature probe: GPIO4
+# Pull-up: 4.7kΩ resistor between GPIO4 and 3V3
+# ─────────────────────────────────────────────
+one_wire:
+  - platform: gpio
+    pin: GPIO4
+    id: bus_onewire
+
 
 
 # ─────────────────────────────────────────────
@@ -173,6 +183,23 @@ sensor:
     device_class: illuminance
     state_class: measurement
     update_interval: 10s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+
+
+  # ── DS18B20 (substrate temperature) ────────
+  - platform: dallas_temp
+    one_wire_id: bus_onewire
+    name: "Shroom Box Substrate Temperature"
+    id: shroom_substrate_temp
+    device_class: temperature
+    state_class: measurement
+    update_interval: 30s
+    # address: 0x0000000000000000  # uncomment and fill after first boot
+    # On first flash: check logs for "Found Dallas device" to get address
+
 
   # ── Diagnostics ────────────────────────────
   - platform: uptime
