@@ -37,19 +37,24 @@ wifi:
 captive_portal:
 
 # ─────────────────────────────────────────────
-# I²C BUS — SDA=GPIO21, SCL=GPIO22
-# Devices: SHT41 (0x44), BH1750 (0x23)
-# Frequency: 50kHz intentionally — 1m cable run
-# increases line capacitance and degrades rise
-# times; 50kHz keeps signal within spec.
-# Sensors have factory-installed pull-ups.
+# ─────────────────────────────────────────────
+# I²C BUSES
+# bus_sht   — SHT41 probe: SDA=GPIO21, SCL=GPIO22
+# bus_light — BH1750/GY-302: SDA=GPIO25, SCL=GPIO26
 # ─────────────────────────────────────────────
 i2c:
-  - id: bus_a
+  - id: bus_sht
     sda: GPIO21
     scl: GPIO22
     scan: true
     frequency: 50kHz
+
+  - id: bus_light
+    sda: GPIO25
+    scl: GPIO26
+    scan: true
+    frequency: 50kHz
+
 
 # ─────────────────────────────────────────────
 # RUNTIME-CONFIGURABLE THRESHOLDS
@@ -145,7 +150,7 @@ binary_sensor:
 sensor:
   # ── SHT41 ──────────────────────────────────
   - platform: sht4x
-    i2c_id: bus_a
+    i2c_id: bus_sht
     address: 0x44
     update_interval: 10s
     temperature:
@@ -161,7 +166,7 @@ sensor:
 
   # ── BH1750 ─────────────────────────────────
   - platform: bh1750
-    i2c_id: bus_a
+    i2c_id: bus_light
     address: 0x23
     name: "Shroom Box Light"
     id: shroom_light
