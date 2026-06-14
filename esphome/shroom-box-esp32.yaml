@@ -7,10 +7,8 @@ esp32:
   framework:
     type: arduino
 
-# Enable logging
 logger:
 
-# Enable Home Assistant API
 api:
   encryption:
     key: !secret shroom_esp32_api_key
@@ -18,6 +16,16 @@ api:
 ota:
   - platform: esphome
     password: !secret shroom_esp32_ota_password
+
+# ─────────────────────────────────────────────
+# SAFE MODE
+# If device crashes on boot 10 times in a row,
+# it enters safe mode (OTA-only, no automations)
+# to allow recovery without physical access.
+# ─────────────────────────────────────────────
+safe_mode:
+  num_attempts: 10
+  reboot_timeout: 3min
 
 wifi:
   ssid: !secret wifi_ssid
@@ -29,9 +37,12 @@ wifi:
 captive_portal:
 
 # ─────────────────────────────────────────────
-# I²C BUS
-# SDA=GPIO21, SCL=GPIO22
-# Devices: SHT41 (0x44), GY-302/BH1750 (0x23)
+# I²C BUS — SDA=GPIO21, SCL=GPIO22
+# Devices: SHT41 (0x44), BH1750 (0x23)
+# Frequency: 50kHz intentionally — 1m cable run
+# increases line capacitance and degrades rise
+# times; 50kHz keeps signal within spec.
+# Sensors have factory-installed pull-ups.
 # ─────────────────────────────────────────────
 i2c:
   - id: bus_a
@@ -41,182 +52,198 @@ i2c:
     frequency: 50kHz
 
 # ─────────────────────────────────────────────
-# WATCHDOG: RESTART ON NaN
+# RUNTIME-CONFIGURABLE THRESHOLDS
+# Adjustable from HA UI — no reflash needed.
+# ─────────────────────────────────────────────
+number:
+  - platform: template
+    name: "Shroom Box Humidity Target Min"
+    id: humidity_min
+    optimistic: true
+    min_value: 70
+    max_value: 95
+    step: 1
+    initial_value: 85
+    restore_value: true
+    unit_of_measurement: "%"
+    icon: "mdi:water-minus"
+    entity_category: config
+
+  - platform: template
+    name: "Shroom Box Humidity Target Max"
+    id: humidity_max
+    optimistic: true
+    min_value: 80
+    max_value: 99
+    step: 1
+    initial_value: 95
+    restore_value: true
+    unit_of_measurement: "%"
+    icon: "mdi:water-plus"
+    entity_category: config
+
+# ─────────────────────────────────────────────
+# WATCHDOG GLOBALS
+# ─────────────────────────────────────────────
+globals:
+  - id: nan_counter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+# ─────────────────────────────────────────────
+# WATCHDOG — NaN consecutive counter
+# Triggers reboot only after 3 consecutive
+# failed readings (~3 min), avoiding false
+# reboots on first-boot sensor warmup.
 # ─────────────────────────────────────────────
 interval:
   - interval: 60s
     then:
+      - lambda: |-
+          if (std::isnan(id(shroom_temperature).state)) {
+            id(nan_counter) += 1;
+            ESP_LOGW("watchdog", "Temperature NaN detected, counter: %d/3", id(nan_counter));
+          } else {
+            id(nan_counter) = 0;
+          }
       - if:
           condition:
-            lambda: 'return std::isnan(id(shroom_box_temperature).state);'
+            lambda: 'return id(nan_counter) >= 3;'
           then:
-            - logger.log: "Temperature sensor NaN detected, restarting..."
+            - logger.log:
+                level: ERROR
+                format: "Temperature NaN for 3 consecutive checks (3 min), forcing restart"
             - button.press: restart_button
-
-binary_sensor:
-  - platform: status
-    name: "Shroom Box ESP32 Status"
 
 button:
   - platform: restart
     name: "Shroom Box ESP32 Restart"
     id: restart_button
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: status
+    name: "Shroom Box ESP32 Status"
+    entity_category: diagnostic
+
+  - platform: template
+    name: "Shroom Box Humidity In Range"
+    device_class: moisture
+    lambda: |-
+      float rh = id(shroom_humidity).state;
+      if (std::isnan(rh)) return false;
+      return rh >= id(humidity_min).state && rh <= id(humidity_max).state;
+
+  - platform: template
+    name: "Shroom Box Light Active"
+    device_class: light
+    lambda: |-
+      float lux = id(shroom_light).state;
+      return !std::isnan(lux) && lux > 5;
 
 sensor:
-  # ─────────────────────────────────────────────
-  # SHT41: Temperature & Humidity (I2C 0x44)
-  # ─────────────────────────────────────────────
+  # ── SHT41 ──────────────────────────────────
   - platform: sht4x
     i2c_id: bus_a
     address: 0x44
+    update_interval: 10s
     temperature:
       name: "Shroom Box Temperature"
-      accuracy_high: 2
-      unit_of_measurement: "°C"
+      id: shroom_temperature
+      device_class: temperature
+      state_class: measurement
     humidity:
       name: "Shroom Box Humidity"
-      accuracy_high: 2
-      unit_of_measurement: "%"
-    update_interval: 10s
+      id: shroom_humidity
+      device_class: humidity
+      state_class: measurement
 
-  # ─────────────────────────────────────────────
-  # GY-302 / BH1750: Light Sensor (I2C 0x23)
-  # Light compliance logging — oyster mushrooms use photoperiod to trigger pinning
-  # ─────────────────────────────────────────────
+  # ── BH1750 ─────────────────────────────────
   - platform: bh1750
     i2c_id: bus_a
     address: 0x23
     name: "Shroom Box Light"
-    unit_of_measurement: "lux"
+    id: shroom_light
+    device_class: illuminance
+    state_class: measurement
     update_interval: 10s
 
-  # ─────────────────────────────────────────────
-  # DIAGNOSTICS: Uptime & WiFi Signal
-  # ─────────────────────────────────────────────
+  # ── Diagnostics ────────────────────────────
   - platform: uptime
     name: "Shroom Box Uptime"
     update_interval: 60s
+    entity_category: diagnostic
+    state_class: total_increasing
 
   - platform: wifi_signal
     name: "Shroom Box WiFi Signal"
+    id: shroom_wifi_signal
+    device_class: signal_strength
+    state_class: measurement
+    entity_category: diagnostic
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
           window_size: 5
           send_every: 5
-      - clamp:
-          min_latency: 0ms
 
-  # ─────────────────────────────────────────────
-  # TEMPLATE SENSORS: Derived Metrics
-  # ─────────────────────────────────────────────
+  # ── Derived Metrics ────────────────────────
+  # All formulas use Alduchov-Eskridge (1996)
+  # Magnus approximation: a=17.625, b=243.04
+  # Valid range: -40..+60°C, 1..100% RH
+  # Reference: doi:10.1175/1520-0450(1996)035
+
   - platform: template
     name: "Shroom Box Dew Point"
     unit_of_measurement: "°C"
     accuracy_decimals: 1
+    device_class: temperature
+    state_class: measurement
+    update_interval: 10s
+    filters:
+      - filter_out: nan
     lambda: |-
-      float t = id(shroom_box_temperature).state;
-      float rh = id(shroom_box_humidity).state;
+      float t = id(shroom_temperature).state;
+      float rh = id(shroom_humidity).state;
       if (std::isnan(t) || std::isnan(rh) || rh <= 0) return NAN;
-      // Magnus formula approximation
-      float a = 17.27;
-      float b = 237.7;
-      float alpha = ((a * t) / (b + t)) + log(rh / 100.0);
+      // Alduchov-Eskridge: a=17.625, b=243.04
+      const float a = 17.625f;
+      const float b = 243.04f;
+      float alpha = ((a * t) / (b + t)) + log(rh / 100.0f);
       return (b * alpha) / (a - alpha);
-    update_interval: 10s
-    filters:
-      - filter_out: nan
-
-  - platform: template
-    name: "Shroom Box Heat Index"
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    lambda: |-
-      float t = id(shroom_box_temperature).state;
-      float rh = id(shroom_box_humidity).state;
-      if (std::isnan(t) || std::isnan(rh)) return NAN;
-      // Heat index formula (Rothfusz regression)
-      float hi = 0.5 * (t + 61.0 + ((t-68.0)*1.2) + (rh*0.094));
-      if (hi >= 80) {
-        hi = -42.379 + 2.04901523*t + 10.14333127*rh - 0.22475541*t*rh - 0.00683783*t*t - 0.05481717*rh*rh + 0.00122874*t*t*rh + 0.00085282*t*rh*rh - 0.00000199*t*t*rh*rh;
-        if (rh < 13 && t >= 80 && t <= 112) hi -= ((13-rh)/4)*sqrt((17-abs(t-95))/17);
-        if (rh > 85 && t >= 80 && t <= 87) hi += ((rh-85)/10)*(87-t);
-      }
-      return hi;
-    update_interval: 10s
-    filters:
-      - filter_out: nan
 
   - platform: template
     name: "Shroom Box Absolute Humidity"
     unit_of_measurement: "g/m³"
     accuracy_decimals: 1
+    state_class: measurement
+    update_interval: 10s
+    filters:
+      - filter_out: nan
     lambda: |-
-      float t = id(shroom_box_temperature).state;
-      float rh = id(shroom_box_humidity).state;
+      float t = id(shroom_temperature).state;
+      float rh = id(shroom_humidity).state;
       if (std::isnan(t) || std::isnan(rh) || rh <= 0) return NAN;
-      // Absolute humidity from temperature and relative humidity
-      float sat_vp = 6.112 * exp((17.67 * t) / (t + 243.5));
-      float actual_vp = sat_vp * (rh / 100.0);
-      return (actual_vp * 2.1674) / (273.15 + t);
-    update_interval: 10s
-    filters:
-      - filter_out: nan
+      // Alduchov-Eskridge: a=17.625, b=243.04
+      // Saturation vapor pressure via Magnus, then ideal gas law
+      const float a = 17.625f;
+      const float b = 243.04f;
+      float sat_vp = 6.1094f * exp((a * t) / (b + t));  // hPa
+      float actual_vp = sat_vp * (rh / 100.0f);
+      // AH = (Mw * vp) / (R * T) → simplified to:
+      return (actual_vp * 2.1674f) / (273.15f + t);
 
-  - platform: template
-    name: "Shroom Box Light Zone"
-    unit_of_measurement: ""
-    accuracy_decimals: 0
-    lambda: |-
-      float lux = id(shroom_box_light).state;
-      if (std::isnan(lux)) return 0;
-      if (lux < 5) return 0;       // 0=dark
-      if (lux <= 100) return 1;    // 1=dim
-      return 2;                     // 2=normal
-    update_interval: 10s
-    filters:
-      - filter_out: nan
-
-# ─────────────────────────────────────────────
-# TEMPLATE BINARY SENSORS
-# ─────────────────────────────────────────────
-binary_sensor:
-  - platform: template
-    name: "Shroom Box Light Active"
-    lambda: |-
-      float lux = id(shroom_box_light).state;
-      return !std::isnan(lux) && lux > 5;
-    update_interval: 10s
-
-  - platform: template
-    name: "Shroom Box Humidity Zone"
-    lambda: |-
-      float rh = id(shroom_box_humidity).state;
-      if (std::isnan(rh)) return false;
-      // Oyster mushrooms thrive at 85-95% RH
-      return rh >= 85 && rh <= 95;
-    update_interval: 10s
-
-# ─────────────────────────────────────────────
-# TEXT SENSORS: Status
-# ─────────────────────────────────────────────
 text_sensor:
   - platform: template
     name: "Shroom Box WiFi Status"
-    lambda: |-
-      if (id(shroom_box_wifi_signal).state < -80) return "Poor";
-      if (id(shroom_box_wifi_signal).state < -60) return "Fair";
-      if (id(shroom_box_wifi_signal).state < -40) return "Good";
-      return "Excellent";
     update_interval: 60s
-
-# ─────────────────────────────────────────────
-# SWITCH: Enable/Disable Watchdog (for debugging)
-# ─────────────────────────────────────────────
-# Uncomment below to add watchdog toggle in HA
-# switch:
-#   - platform: template
-#     name: "Shroom Box Watchdog"
-#     id: watchdog_enabled
-#     optimistic: true
-#     restore_state: true
+    entity_category: diagnostic
+    icon: "mdi:wifi"
+    lambda: |-
+      float sig = id(shroom_wifi_signal).state;
+      if (std::isnan(sig))      return {"Unknown"};
+      if (sig < -80)            return {"Poor"};
+      if (sig < -60)            return {"Fair"};
+      if (sig < -40)            return {"Good"};
+      return {"Excellent"};
