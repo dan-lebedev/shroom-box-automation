@@ -56,10 +56,11 @@ S3 — Stack setup (InfluxDB + Grafana + ESPHome). Pipeline verified on test sen
 - [ ] S8: Final report in README — photos, graphs, harvest results
 
 ### Hardware Decisions
-- **T/RH sensor:** industrial probe in metal housing with filter cap (SHT3x/SHT4x, I²C). Built-in condensate protection. Proven working with ESPHome SHT library.
-- **CO₂ sensor:** NDIR Zigbee — integrated via Zigbee2MQTT, bypasses ESP32.
-- **Humidification:** active — ultrasonic reptile humidifier with hose. Controlled via Zigbee smart plug. Auto-resume confirmed.
-- **Fan:** existing 12V + PWM dimmer + Zigbee plug for AC power.
+- **T/RH sensor:** industrial probe in metal housing with filter cap (SHT41, I²C). Built-in condensate protection. Proven working with ESPHome SHT library.
+- **T soil sensor:** DS18B20 (1-Wire)
+- **CO₂ sensor:** SCD41 (I2C)
+- **Humidification:** active — mechanically controlled ultrasonic reptile humidifier with hose. Controlled via SSR-25 DA.
+- **Fan:** existing 12V + IRF520 MOSFET
 - **Light sensor:** BH1750 (GY-302 module, I²C on dedicated bus GPIO25/GPIO26) — photoperiod compliance logging
 - **BOM:** `hardware/BOM.md`
 - **Physical box description:** `docs/box-description.md`
