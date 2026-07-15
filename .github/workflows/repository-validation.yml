@@ -12,27 +12,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - uses: DavidAnson/markdownlint-cli2-action@v20
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v23
+        with:
+          globs: |
+            **/*.md
 
   yaml:
     name: YAML
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - uses: ibiqlik/action-yamllint@v3
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v3
 
   links:
     name: Links
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - uses: lycheeverse/lychee-action@v2
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
         with:
           args: >
             --no-progress
