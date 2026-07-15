@@ -1,0 +1,40 @@
+name: Hardware task
+description: Hardware design, assembly or validation
+labels:
+  - hardware
+
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware involved
+
+  - type: textarea
+    id: components
+    attributes:
+      label: Affected components
+      description: List all hardware involved in this task.
+      placeholder: |
+        - ESP32
+        - SHT45
+        - Fan
+        - Power supply
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
