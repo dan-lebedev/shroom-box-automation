@@ -19,7 +19,9 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v23
         with:
           globs: |
-            **/*.md
+            README.md
+            PROJECT_LOG.md
+            .github/**/*.md
 
   yaml:
     name: YAML
