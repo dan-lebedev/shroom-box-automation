@@ -65,10 +65,7 @@ flowchart LR
     INFLUX --> GRAFANA
 
     DS18B20 --> OW
-    OW --> ESPHOME
-
-
-    
+    OW --> ESPHOME  
 ```
 
 ## Data Flow
@@ -81,13 +78,13 @@ flowchart LR
 
 ## Control Strategy
 
-| Parameter | Source | Action |
-|---|---|---|
-| Temperature (air) | SHT41 | Monitoring only |
-| Temperature (substrate) | DS18B20 | Monitoring only — substrate vs air delta |
-| Relative humidity | SHT41 | Humidifier control |
-| CO2 | Zigbee NDIR sensor | Exhaust fan control |
-| Light | BH1750 | Photoperiod compliance logging |
+| Parameter               | Source             | Action                               |
+| ----------------------- | ------------------ | ------------------------------------ |
+| Temperature (air)       | SHT41              | Monitoring only                      |
+| Temperature (substrate) | DS18B20            | Monitoring only — substrate vs air delta |
+| Relative humidity       | SHT41              | Humidifier control                   |
+| CO₂                     | Zigbee NDIR sensor | Exhaust fan control                  |
+| Light                   | BH1750             | Photoperiod compliance logging       |
 
 
 ## Notes
