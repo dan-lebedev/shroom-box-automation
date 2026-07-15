@@ -1,0 +1,24 @@
+name: Documentation
+description: Create or improve documentation
+labels:
+  - documentation
+
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Files to update
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
