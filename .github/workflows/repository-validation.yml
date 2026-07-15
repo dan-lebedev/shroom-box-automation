@@ -22,6 +22,7 @@ jobs:
             README.md
             PROJECT_LOG.md
             .github/**/*.md
+            .github/*.md
 
   yaml:
     name: YAML
