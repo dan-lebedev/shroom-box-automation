@@ -20,7 +20,6 @@ jobs:
         with:
           globs: |
             README.md
-            PROJECT_LOG.md
             .github/**/*.md
             .github/*.md
 
