@@ -1,0 +1,40 @@
+name: Repository Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  markdown:
+    name: Markdown
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DavidAnson/markdownlint-cli2-action@v20
+
+  yaml:
+    name: YAML
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ibiqlik/action-yamllint@v3
+
+  links:
+    name: Links
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >
+            --no-progress
+            --verbose
+            "./**/*.md"
