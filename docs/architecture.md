@@ -21,24 +21,19 @@ Configuration will not be split into multiple packages unless there is a demonst
 ```mermaid
 flowchart LR
     subgraph Box["Shroom Box"]
-        SHT["SHT41 T/RH Probe"]
-        BH["BH1750 Light Sensor"]
-        FAN["12V Exhaust Fan"]
+        SHT["SHT41"]
+        SCD["SCD41"]
+        BH["BH1750"]
+        DS["DS18B20"]
+
+        FAN["Exhaust Fan"]
         HUM["Ultrasonic Humidifier"]
-        DS18B20["DS18B20 Substrate Probe"]
+        LIGHT["Grow Light"]
     end
 
     subgraph ESP["ESP32 / ESPHome"]
-        I2CA["I2C Bus A<br/>GPIO21/GPIO22"]
-        I2CB["I2C Bus B<br/>GPIO25/GPIO26"]
         ESPHOME["ESPHome Firmware"]
-        OW["1-Wire Bus<br/>GPIO4"]
-    end
-
-    subgraph Zigbee["Zigbee Network"]
-        CO2["NDIR CO2 Sensor"]
-        FANPLUG["Fan Smart Plug"]
-        HUMPLUG["Humidifier Smart Plug"]
+        RELAY["Relay Outputs"]
     end
 
     subgraph HA["Home Assistant OS"]
@@ -46,54 +41,53 @@ flowchart LR
         AUTO["Automations"]
     end
 
-    subgraph Data["Data Stack"]
+    subgraph DATA["Data Stack"]
         INFLUX["InfluxDB"]
         GRAFANA["Grafana"]
     end
 
-    SHT --> I2CA
-    BH --> I2CB
-    I2CA --> ESPHOME
-    I2CB --> ESPHOME
+    SHT --> ESPHOME
+    SCD --> ESPHOME
+    BH --> ESPHOME
+    DS --> ESPHOME
+
     ESPHOME --> HASS
 
-    CO2 --> HASS
+    AUTO --> RELAY
+
+    RELAY --> FAN
+    RELAY --> HUM
+    RELAY --> LIGHT
+
     HASS --> AUTO
-    AUTO --> FANPLUG
-    AUTO --> HUMPLUG
-
-    FANPLUG --> FAN
-    HUMPLUG --> HUM
-
     HASS --> INFLUX
     INFLUX --> GRAFANA
-
-    DS18B20 --> OW
-    OW --> ESPHOME  
 ```
 
 ## Data Flow
 
-1. ESP32 reads temperature, humidity, and light level.
-2. CO2 is provided by a Zigbee NDIR sensor through Zigbee2MQTT/Home Assistant.
+1. ESP32 reads all environmental sensors.
+2. ESPHome exposes measurements to Home Assistant.
 3. Home Assistant stores selected entities in InfluxDB.
-4. Grafana visualizes the time-series data.
-5. Home Assistant automations control fan and humidifier through Zigbee smart plugs.
+4. Grafana visualizes historical data.
+5. Home Assistant controls relay outputs exposed by ESPHome.
 
 ## Control Strategy
 
-| Parameter               | Source             | Action                               |
-| ----------------------- | ------------------ | ------------------------------------ |
-| Temperature (air)       | SHT41              | Monitoring only                      |
-| Temperature (substrate) | DS18B20            | Monitoring only — substrate vs air delta |
-| Relative humidity       | SHT41              | Humidifier control                   |
-| CO₂                     | Zigbee NDIR sensor | Exhaust fan control                  |
-| Light                   | BH1750             | Photoperiod compliance logging       |
+| Parameter             | Source  | Action              |
+| --------------------- | ------- | ------------------- |
+| Air Temperature       | SHT41   | Monitoring          |
+| Relative Humidity     | SHT41   | Humidifier control  |
+| CO₂                   | SCD41   | Exhaust fan control |
+| Light Level           | BH1750  | Compliance logging  |
+| Substrate Temperature | DS18B20 | Monitoring          |
+
 
 
 ## Notes
 
-- The ESP32 does not directly switch high-power loads.
-- Fan and humidifier are controlled through Zigbee smart plugs.
-- The humidifier has confirmed auto-resume behavior after power cycling.
-- The light sensor is used for compliance logging, not active light control.
+- ESP32 directly controls all actuators through relay modules.
+- Zigbee devices are not part of the system architecture.
+- The humidifier is controlled through a relay and supports automatic recovery after power restoration.
+- The exhaust fan provides fresh air exchange (FAE) and is not used for air circulation.
+- The light sensor is used for compliance logging rather than active light control.

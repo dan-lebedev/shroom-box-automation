@@ -4,15 +4,15 @@ Automated environment control for oyster mushroom cultivation.
 Engineering portfolio project — focus on sensors, data pipeline, and automation.
 
 ## Stack
-- **Hardware:** ESP32, industrial T/RH probe (SHT3x/SHT4x I²C), NDIR CO₂ Zigbee sensor, ultrasonic humidifier, 12V PWM fan
+- **Hardware:** ESP32, SHT41, SCD41, BH1750, DS18B20, relay modules, ultrasonic humidifier, exhaust fan
 - **Firmware:** ESPHome
-- **Control:** Home Assistant (HAOS) + Zigbee2MQTT
+- **Control:** Home Assistant (HAOS)
 - **Data:** InfluxDB + Grafana
 
 ## Goals
-- Stable VPD / humidity / CO₂ control during fruiting cycle
-- Full data pipeline: sensor → ESPHome → HA → InfluxDB → Grafana
-- Documented hardware, wiring, and automations
+- Stable humidity and CO₂ control during the fruiting cycle
+- Full data pipeline: sensors → ESPHome → Home Assistant → InfluxDB → Grafana
+- Documented hardware, wiring, firmware, and automations
 - Reproducible setup
 
 ## Repo Structure

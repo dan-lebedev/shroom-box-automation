@@ -113,5 +113,5 @@ Measures temperature inside the mushroom substrate..
 - SHT41 is the primary source for air temperature and humidity.
 - SCD41 is used exclusively for CO₂ measurement.
 - BH1750 measures illuminance for lighting monitoring.
-- DS18B20 measures nutrient solution temperature.
+- DS18B20 measures substrate temperature.
 - Each sensor is exposed as a dedicated Home Assistant entity.
