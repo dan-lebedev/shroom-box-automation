@@ -89,7 +89,7 @@ Ambient illuminance measured at canopy level.
 
 | Property | Value |
 |----------|-------|
-| Entity | `sensor.water_temperature` |
+| Entity | `sensor.substrate_temperature` |
 | Source | DS18B20 |
 | Unit | °C |
 | Device Class | `temperature` |

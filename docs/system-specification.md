@@ -48,7 +48,6 @@ The system shall actively control:
 
 - Humidification
 - Fresh air exchange
-- Air circulation
 - Lighting
 
 The system shall support different environmental operating profiles for each cultivation stage, including substrate colonization, primordia initiation, and fruiting.
