@@ -14,6 +14,10 @@ The goal is not to build a commercial grow controller, but to show a practical a
 
 ## System Architecture
 
+The project uses a single ESPHome configuration file (shroom-box-esp32.yaml) for the controller.
+
+Configuration will not be split into multiple packages unless there is a demonstrated engineering need (for example, multiple controllers or substantial configuration reuse).
+
 ```mermaid
 flowchart LR
     subgraph Box["Shroom Box"]
