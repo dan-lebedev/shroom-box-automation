@@ -31,3 +31,41 @@ The system shall satisfy the following primary objectives:
 3. Continue operating safely and predictably under expected failure conditions.
 
 4. Produce engineering-quality historical data suitable for validation, troubleshooting, and future system improvements.
+
+---
+
+## 4. Environmental Parameters
+
+The system shall monitor the following environmental parameters throughout the cultivation cycle:
+
+- Air temperature
+- Relative humidity
+- Carbon dioxide (CO₂) concentration
+- Light intensity
+- Substrate temperature
+
+The system shall actively control:
+
+- Humidification
+- Fresh air exchange
+- Air circulation
+- Lighting
+
+The system shall support different environmental operating profiles for each cultivation stage, including substrate colonization, primordia initiation, and fruiting.
+
+Target values, acceptable tolerances, and operating schedules shall be configurable without changing the system design.
+
+---
+
+## 5. Functional Requirements
+
+The system shall:
+
+- Continuously monitor all defined environmental parameters.
+- Record historical measurements for every monitored parameter.
+- Automatically regulate environmental conditions using the available control equipment.
+- Support stage-specific environmental operating profiles.
+- Generate alarms when environmental conditions exceed configured limits or when system components become unavailable.
+- Record the operational state of all environmental control equipment.
+- Continue collecting environmental data whenever partial system failures occur.
+- Preserve historical records suitable for operational analysis, troubleshooting, and compliance verification.
